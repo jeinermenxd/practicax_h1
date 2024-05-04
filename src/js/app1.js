@@ -19,7 +19,7 @@ var firebaseConfig = {
 const tablaProductos = document.getElementById("bodyProductos");
 
 coleccionProductos.on("value", snapshot => {
-  tablaProductos.innerHTML = ""; // Limpiar la tabla antes de agregar nuevos datos
+  tablaProductos.innerHTML = ""; // Limpiar la tabla antes de agregar
   snapshot.forEach(childSnapshot => {
     const producto = childSnapshot.val();
     const fila = `
@@ -38,26 +38,25 @@ coleccionProductos.on("value", snapshot => {
   });
 });
 
- // Función para abrir el modal
 function abrirModal() {
     const modal = document.getElementById("modalInsertarProducto");
     modal.classList.remove("hidden");
 }
 
-// Función para cerrar el modal
+
 function cerrarModal() {
     const modal = document.getElementById("modalInsertarProducto");
     modal.classList.add("hidden");
 }
 
-// Función para guardar el producto en la base de datos
+// Función para guardar el producto en la base
 function guardarProducto() {
     const codigo = document.getElementById("codigo").value;
     const nombre = document.getElementById("Nombre").value;
     const imagen = document.getElementById("imge").value;
     const descripcion = document.getElementById("Descripcion").value;
 
-    // Insertar el nuevo producto en la base de datos
+    // Insertar el nuevo producto 
     coleccionProductos.push({
         codigo: codigo,
         Nombre: nombre,
@@ -65,8 +64,7 @@ function guardarProducto() {
         Descripcion: descripcion
     });
 
-    // Cerrar el modal después de guardar
-    // Limpiar los campos del modal después de guardar
+    // Limpiar los campos
     document.getElementById("codigo").value = "";
     document.getElementById("Nombre").value = "";
     document.getElementById("imge").value = "";
@@ -75,66 +73,61 @@ function guardarProducto() {
     cerrarModal();
 }
 
-// Función para abrir el modal de edición con los datos del producto
 function abrirModalEditar(key) {
     const modal = document.getElementById("modalEditarProducto");
-    const form = document.getElementById("formEditarProducto");
+    const productoRef = coleccionProductos.child(key);
 
-    // Obtener el snapshot del producto
-    const productoSnapshot = coleccionProductos.child(key);
+    productoRef.once("value", snapshot => {
+      const producto = snapshot.val();
+      document.getElementById("editCodigo").value = producto.codigo;
+      document.getElementById("editNombre").value = producto.Nombre;
+      document.getElementById("editImagen").value = producto.imge;
+      document.getElementById("editDescripcion").value = producto.Descripcion;
 
-    // Escuchar el evento "value" para obtener los datos del producto
-    productoSnapshot.once("value", function(snapshot) {
-        const producto = snapshot.val();
-
-        // Llenar el formulario con los datos del producto
-        form.elements["editNombre"].value = producto.Nombre;
-        form.elements["editImagen"].value = producto.imge;
-        form.elements["editDescripcion"].value = producto.Descripcion;
-
-        // Escuchar el evento submit del formulario
-        form.addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevenir el comportamiento por defecto del formulario
-            const nuevoNombre = form.elements["editNombre"].value;
-            const nuevaImagen = form.elements["editImagen"].value;
-            const nuevaDescripcion = form.elements["editDescripcion"].value;
-            
-            // Verificar que se haya proporcionado al menos un campo para actualizar
-            if (nuevoNombre || nuevaImagen || nuevaDescripcion) {
-                // Actualizar el producto en la base de datos
-                const valoresActualizados = {};
-                if (nuevoNombre) valoresActualizados.Nombre = nuevoNombre;
-                if (nuevaImagen) valoresActualizados.imge = nuevaImagen;
-                if (nuevaDescripcion) valoresActualizados.Descripcion = nuevaDescripcion;
-                coleccionProductos.child(key).update(valoresActualizados);
-                cerrarModalEditar(); // Cerrar el modal después de guardar los cambios
-            } else {
-                alert("Debes ingresar al menos un campo para actualizar.");
-            }
-        });
-
-        // Mostrar el modal
-        modal.classList.remove("hidden");
+      // Almacenar referencia del producto para poder actualizarlo
+      modal.dataset.productoRefKey = key;
     });
-}
 
-// Función para cerrar el modal de edición
-function cerrarModalEditar() {
+    modal.classList.remove("hidden");
+  }
+
+  // Función para cerrar el modal de edición
+  function cerrarModalEditar() {
     const modal = document.getElementById("modalEditarProducto");
     modal.classList.add("hidden");
-}
+  }
+  // Función para guardar la edición del producto en la base de datos
+  function guardarEdicionProducto(event) {
+    event.preventDefault();
+
+    const modal = document.getElementById("modalEditarProducto");
+    const key = modal.dataset.productoRefKey;
+    const productoRef = coleccionProductos.child(key);
+
+    const codigo = document.getElementById("editCodigo").value;
+    const nombre = document.getElementById("editNombre").value;
+    const imagen = document.getElementById("editImagen").value;
+    const descripcion = document.getElementById("editDescripcion").value;
+
+    const productoActualizado = {
+      codigo: codigo,
+      Nombre: nombre,
+      imge: imagen,
+      Descripcion: descripcion
+    };
+
+    productoRef.update(productoActualizado);
+
+    cerrarModalEditar();
+  }
 
 
-
-
-
-// Función para cerrar el modal de confirmación de eliminación
 function cerrarModalEliminarProducto() {
     const modalEliminarProducto = document.getElementById("modalEliminarProducto");
     modalEliminarProducto.classList.add("hidden");
 }
 
-// Variable global para almacenar temporalmente la clave del producto a eliminar
+// Variable global para la clave del producto a eliminar
 let productoAEliminarKey = null;
 
 // Función para abrir el modal de confirmación de eliminación
@@ -150,14 +143,13 @@ function eliminarProducto(key) {
     abrirModalEliminar(key);
 }
 
-// Función para confirmar la eliminación del producto
 function eliminarProductoConfirmado() {
     // Verificar si la clave del producto a eliminar está definida
     if (productoAEliminarKey) {
-        // Eliminar el producto de la base de datos usando la clave almacenada
+        // Eliminar el producto usando la clave almacenada
         coleccionProductos.child(productoAEliminarKey).remove();
         cerrarModalEliminarProducto();
-        // Restablecer la variable de clave a null después de eliminar el producto
+        // Restablecer la variable de clave a null después de eliminar 
         productoAEliminarKey = null;
     } else {
         console.error("No se ha especificado la clave del producto a eliminar.");
