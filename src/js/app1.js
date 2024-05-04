@@ -29,7 +29,7 @@ coleccionProductos.on("value", snapshot => {
         <td class="text-center px-4 py-2">${producto.imge}</td>
         <td class="text-center px-4 py-2">${producto.Descripcion}</td>
         <td class=" text-center px-4 py-2">
-                            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="editarProducto('${childSnapshot.key}')">Editar</button>
+                            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="abrirModalEditar('${childSnapshot.key}')">Editar</button>
                             <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="eliminarProducto('${childSnapshot.key}')">Eliminar</button>
         </td>
       </tr>
@@ -75,20 +75,57 @@ function guardarProducto() {
     cerrarModal();
 }
 
-function editarProducto(key) {
-    const nuevoNombre = prompt("Ingrese el nuevo nombre del producto:");
-    const nuevaimagen = prompt("Ingresa el link del producto");
-    const nuevaDescripcion = prompt("Ingrese la nueva descripción del producto:");
-  
-    if (nuevoNombre && nuevaDescripcion) {
-      // Actualizar el producto en la base de datos
-      coleccionProductos.child(key).update({
-        Nombre: nuevoNombre,
-        imge: nuevaimagen,
-        Descripcion: nuevaDescripcion
-      });
-    }
-  }
+// Función para abrir el modal de edición con los datos del producto
+function abrirModalEditar(key) {
+    const modal = document.getElementById("modalEditarProducto");
+    const form = document.getElementById("formEditarProducto");
+
+    // Obtener el snapshot del producto
+    const productoSnapshot = coleccionProductos.child(key);
+
+    // Escuchar el evento "value" para obtener los datos del producto
+    productoSnapshot.once("value", function(snapshot) {
+        const producto = snapshot.val();
+
+        // Llenar el formulario con los datos del producto
+        form.elements["editNombre"].value = producto.Nombre;
+        form.elements["editImagen"].value = producto.imge;
+        form.elements["editDescripcion"].value = producto.Descripcion;
+
+        // Escuchar el evento submit del formulario
+        form.addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevenir el comportamiento por defecto del formulario
+            const nuevoNombre = form.elements["editNombre"].value;
+            const nuevaImagen = form.elements["editImagen"].value;
+            const nuevaDescripcion = form.elements["editDescripcion"].value;
+            
+            // Verificar que se haya proporcionado al menos un campo para actualizar
+            if (nuevoNombre || nuevaImagen || nuevaDescripcion) {
+                // Actualizar el producto en la base de datos
+                const valoresActualizados = {};
+                if (nuevoNombre) valoresActualizados.Nombre = nuevoNombre;
+                if (nuevaImagen) valoresActualizados.imge = nuevaImagen;
+                if (nuevaDescripcion) valoresActualizados.Descripcion = nuevaDescripcion;
+                coleccionProductos.child(key).update(valoresActualizados);
+                cerrarModalEditar(); // Cerrar el modal después de guardar los cambios
+            } else {
+                alert("Debes ingresar al menos un campo para actualizar.");
+            }
+        });
+
+        // Mostrar el modal
+        modal.classList.remove("hidden");
+    });
+}
+
+// Función para cerrar el modal de edición
+function cerrarModalEditar() {
+    const modal = document.getElementById("modalEditarProducto");
+    modal.classList.add("hidden");
+}
+
+
+
 
 
 // Función para cerrar el modal de confirmación de eliminación
